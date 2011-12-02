@@ -50,25 +50,19 @@ function rest(topic) {
   match (HttpRequest.get_method()) {
     case {some: method} :
       match (method) {
-        case {post}: {
+        case {post}:
           _ = save_source(topic, HttpRequest.get_body() ? "")
           Resource.raw_status({success})
-        }
-        case {delete}: {
+        case {delete}:
           remove_topic(topic)
           Resource.raw_status({success})
-        }
-        case {get}: {
+        case {get}:
           Resource.raw_response(load_source(topic), "text/plain", {success})
-        }
-// FIXME to be replaced by default
-        case _: {
+        default:
            Resource.raw_status({method_not_allowed})
-        }
       }
-    case _: {
+    default:
       Resource.raw_status({bad_request})
-    }
   }
 }
 
@@ -78,15 +72,15 @@ function topic_of_path(path) {
 
 function start(url) {
   match (url) {
-   case {path: [] ... }: {display("Hello")}
-   case {path: ["_rest_" | path] ...}: {rest(topic_of_path(path))}
-   case {~path ...}: {display(topic_of_path(path))}
+   case {path: [] ... }: display("Hello")
+   case {path: ["_rest_" | path] ...}: rest(topic_of_path(path))
+   case {~path ...}: display(topic_of_path(path))
   }
 }
 
 Server.start(Server.http,
   [ {bundle: @static_include_directory("resources")}
-  , {filter: Server.Filter.anywhere, dispatch: start}
+  , {dispatch: start}
   ]
 )
 

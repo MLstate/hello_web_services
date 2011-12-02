@@ -13,13 +13,12 @@ function uri_for_topic(topic) {
 
 exposed function load_source(topic) {
   match (WebClient.Get.try_get(uri_for_topic(topic))) {
-    case {failure: _} : { "Error, could not connect" }
-    case {~success} : {
+    case {failure: _} : "Error, could not connect"
+    case {~success} :
       match (WebClient.Result.get_class(success)) {
-        case {success}: { success.content }
-        case _: { "Error {success.code}" }
+        case {success}: success.content
+        default: "Error {success.code}"
       }
-    }
   }
 }
 
@@ -30,15 +29,15 @@ exposed function load_rendered(topic) {
 
 exposed function save_source(topic, source) {
   match (WebClient.Post.try_post(uri_for_topic(topic), source)) {
-    case { failure: _ }: {
+    case { failure: _ }:
           {failure: "Could not reach the distant server"}
-    }
-    case { success: s }: {
+    case { success: s }:
       match (WebClient.Result.get_class(s)) {
-      case {success}: {success: load_rendered(topic)}
-      case _: {failure: "Error {s.code}"}
+        case {success}:
+          {success: load_rendered(topic)}
+        default:
+          {failure: "Error {s.code}"}
       }
-    }
   }
 }
 
@@ -57,14 +56,12 @@ function edit(topic) {
 
 function save(topic) {
   match (save_source(topic, Dom.get_value(#edit_content))) {
-    case { ~success }: {
+    case { ~success }:
       #show_content = success
       Dom.hide(#edit_content)
       Dom.show(#show_content)
-    }
-    case {~failure}: {
+    case {~failure}:
       #show_messages = <>{failure}</>
-    }
   }
 }
 
@@ -79,27 +76,21 @@ function display(topic) {
 
 function rest(topic) {
   match (HttpRequest.get_method()) {
-    case {some: method}: {
+    case {some: method}:
       match (method) {
-        case {post}: {
+        case {post}:
           _ = save_source(topic, HttpRequest.get_body()?"")
           Resource.raw_status({success})
-        }
-        case {delete}: {
+        case {delete}:
           remove_topic(topic)
           Resource.raw_status({success})
-        }
-        case {get}: {
+        case {get}:
           Resource.source(load_source(topic), "text/plain")
-        }
-        case _: {
+        default:
           Resource.raw_status({method_not_allowed})
-        }
       }
-    }
-    case _: {
+    default:
       Resource.raw_status({bad_request})
-    }
   }
 }
 
@@ -109,14 +100,14 @@ function topic_of_path(path) {
 
 function start(url) {
   match (url) {
-    case {path: [] ... }:             { display("Hello") }
-    case {path: ["rest" | path] ...}: { rest(topic_of_path(path)) }
-    case {~path ...}:                 { display(topic_of_path(path)) }
+    case {path: [] ... }:             display("Hello")
+    case {path: ["rest" | path] ...}: rest(topic_of_path(path))
+    case {~path ...}:                 display(topic_of_path(path))
   }
 }
 
 Server.start(Server.http,
   [ {bundle: @static_include_directory("resources")}
-  , {filter: Server.Filter.anywhere, dispatch: start}
+  , {dispatch: start}
   ]
 )
