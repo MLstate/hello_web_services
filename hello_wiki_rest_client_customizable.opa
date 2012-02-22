@@ -6,13 +6,13 @@ uri_for_topic =
       names: ["--wiki-server-domain"],
       description: "The REST server for this wiki. By default, localhost.",
 // FIXME, | after parser should not be needed
-      function on_param(x) { parser | y=Rule.consume -> {no_params: {x with domain: y}} }
+     function on_param(x) { parser { case y=Rule.consume : {no_params: {x with domain: y}}} }
      }
   port_parser =
     {CommandLine.default_parser with
       names: ["--wiki-server-port"],
       description: "The server port of the REST server for this wiki. By default, 8080.",
-      function on_param(x) { parser | y=Rule.natural -> {no_params: {x with port: {some: y}}} }
+     function on_param(x) { parser { case y=Rule.natural : {no_params: {x with port: {some: y}}}} }
     }
   base_uri =
     CommandLine.filter(
@@ -23,61 +23,58 @@ uri_for_topic =
       }
     )
   function(topic) {
-    Uri.of_absolute({base_uri with path: ["_rest_", topic]})
+    Uri.of_absolute({base_uri with path: ["_rest_", topic]});
   }
 
 exposed function load_source(topic) {
-  match (WebClient.Get.try_get(uri_for_topic(topic))) {
-    case {failure: _} : "Error, could not connect"
-    case {~success} :
-      match (WebClient.Result.get_class(success)) {
-        case {success}: success.content
-        default: "Error {success.code}"
-      }
-  }
+    match (WebClient.Get.try_get(uri_for_topic(topic))) {
+    case { failure : _ }: "Error, could not connect";
+    case ~{ success }:
+        match (WebClient.Result.get_class(success)) {
+        case { success }: success.content;
+        default: "Error {success.code}";
+        }
+    }
 }
 
 exposed function load_rendered(topic) {
-  source = load_source(topic)
-  Markdown.xhtml_of_string(Markdown.default_options, source)
+    source = load_source(topic);
+    Markdown.xhtml_of_string(Markdown.default_options, source);
 }
 
 exposed function save_source(topic, source) {
-  match (WebClient.Post.try_post(uri_for_topic(topic), source)) {
-    case { failure: _ }:
-          {failure: "Could not reach the distant server"}
-    case { success: s }:
-      match (WebClient.Result.get_class(s)) {
-        case {success}:
-          {success: load_rendered(topic)}
-        default:
-          {failure: "Error {s.code}"}
-      }
-  }
+    match (WebClient.Post.try_post(uri_for_topic(topic), source)) {
+    case { failure : _ }: {failure : "Could not reach the distant server"}
+    case { success : s }:
+        match (WebClient.Result.get_class(s)) {
+        case { success }: {success : load_rendered(topic)};
+        default: {failure : "Error {s.code}"};
+        }
+    }
 }
 
 function remove_topic(topic) {
-  _ = WebClient.Delete.try_delete(uri_for_topic(topic))
-  void
+    _ = WebClient.Delete.try_delete(uri_for_topic(topic))
+    void
 }
 
 function edit(topic) {
-  #show_messages = <></>
-  Dom.set_value(#edit_content, load_source(topic))
-  Dom.hide(#show_content)
-  Dom.show(#edit_content)
-  Dom.give_focus(#edit_content)
+    #show_messages = <></>;
+    Dom.set_value(#edit_content, load_source(topic));
+    Dom.hide(#show_content);
+    Dom.show(#edit_content);
+    Dom.give_focus(#edit_content);
 }
 
 function save(topic) {
-  match (save_source(topic, Dom.get_value(#edit_content))) {
-    case { ~success }:
-      #show_content = success
-      Dom.hide(#edit_content)
-      Dom.show(#show_content)
-    case {~failure}:
-      #show_messages = <>{failure}</>
-  }
+    match (save_source(topic, Dom.get_value(#edit_content))) {
+    case ~{ success }:
+        #show_content = success;
+        Dom.hide(#edit_content);
+        Dom.show(#show_content);
+    case ~{ failure}:
+        #show_messages = <>{failure}</>;
+    }
 }
 
 function display(topic) {
@@ -90,39 +87,42 @@ function display(topic) {
 }
 
 function rest(topic) {
-  match (HttpRequest.get_method()) {
+    match (HttpRequest.get_method()) {
     case {some: method}:
-      match (method) {
-        case {post}:
-          _ = save_source(topic, HttpRequest.get_body()?"")
-          Resource.raw_status({success})
-        case {delete}:
-          remove_topic(topic)
-          Resource.raw_status({success})
-        case {get}:
-          Resource.source(load_source(topic), "text/plain")
+        match (method) {
+        case { post }:
+            _ = save_source(topic, HttpRequest.get_body()?"")
+            Resource.raw_status({success});
+        case { delete }:
+            remove_topic(topic);
+            Resource.raw_status({success});
+        case { get }:
+            Resource.source(load_source(topic), "text/plain");
         default:
-          Resource.raw_status({method_not_allowed})
-      }
-    default:
-      Resource.raw_status({bad_request})
-  }
+            Resource.raw_status({method_not_allowed});
+        }
+    default:  Resource.raw_status({bad_request})
+    }
 }
 
 function topic_of_path(path) {
-  String.capitalize(String.to_lower(List.to_string_using("", "", "::", path)))
+    String.capitalize(
+        String.to_lower(List.to_string_using("", "", "::", path))
+    );
 }
 
 function start(url) {
-  match (url) {
-    case {path: [] ... }:             display("Hello")
-    case {path: ["rest" | path] ...}: rest(topic_of_path(path))
-    case {~path ...}:                 display(topic_of_path(path))
-  }
+    match (url) {
+    case { path : [], ... }: display("Hello");
+    case { path : ["rest" | path], ... }: rest(topic_of_path(path));
+    case ~{ path, ... }: display(topic_of_path(path));
+    }
+
 }
 
-Server.start(Server.http,
-  [ {resources: @static_include_directory("resources")}
-  , {dispatch: start}
-  ]
-)
+Server.start(
+    Server.http,
+    [ {resources: @static_include_directory("resources")}
+      , {dispatch: start}
+    ]
+);
