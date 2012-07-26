@@ -37,7 +37,7 @@ exposed function load_source(topic) {
     }
 }
 
-exposed function load_rendered(topic) {
+function load_rendered(topic) {
     source = load_source(topic);
     Markdown.xhtml_of_string(Markdown.default_options, source);
 }
