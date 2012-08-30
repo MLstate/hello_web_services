@@ -117,7 +117,6 @@ function start(url) {
     case { path : ["rest" | path], ... }: rest(topic_of_path(path));
     case ~{ path, ... }: display(topic_of_path(path));
     }
-
 }
 
 Server.start(
