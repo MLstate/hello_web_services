@@ -17,7 +17,7 @@ uri_for_topic =
   base_uri =
     CommandLine.filter(
       {title     : "Wiki arguments",
-       init      : {Uri.default_absolute with domain: "localhost", schema: {some: "http"}},
+       init      : {Uri.default_absolute with domain: "localhost", schema: {some: "http"}, port: {some: 8080}},
        parsers   : [domain_parser, port_parser],
        anonymous : []
       }
