@@ -11,4 +11,4 @@ Compile and run the client with:
 
 `opa hello_wiki_rest_client_customizable.opa --`
 
-More about this example in Opa manual, chapter [Hello, web services](http://doc.opalang.org/#!/manual/Hello--web-services).
+More about this example in Opa manual, chapter [Hello, web services](http://doc.opalang.org/manual/Hello--web-services----client).
