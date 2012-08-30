@@ -9,6 +9,6 @@ Compile and run the server with:
 
 Compile and run the client with:
 
-`opa hello_wiki_rest_client_customizable.opa --`
+`opa hello_wiki_rest_client_customizable.opa -- --port 8081`
 
 More about this example in Opa manual, chapter [Hello, web services](http://doc.opalang.org/manual/Hello--web-services----client).
