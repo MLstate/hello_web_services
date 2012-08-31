@@ -11,4 +11,5 @@ Compile and run the client with:
 
 `opa hello_wiki_rest_client_customizable.opa -- --port 8081`
 
-More about this example in Opa manual, chapter [Hello, web services](http://doc.opalang.org/manual/Hello--web-services----client).
+More about this example in Opa manual, chapter [Hello, web services](https://github.com/MLstate/opalang/wiki/Hello%2C-web-services)
+and [Hello, web services client](https://github.com/MLstate/opalang/wiki/Hello%2C-web-services----client).
